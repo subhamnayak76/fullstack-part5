@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import Blog from './components/Blog'
 import blogService from './services/blogs'
-
+import Notification from './components/Notification'
 const App = () => {
   const [blogs, setBlogs] = useState([])
   const [username, setUsername] = useState('')
@@ -10,13 +10,37 @@ const App = () => {
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
   const [url, setUrl] = useState('')
-
+  const [name, setName] = useState('')
+  const [notification, setNotification] = useState(null)
   useEffect(() => {
-    blogService.getAll().then(blogs =>
-      setBlogs( blogs )
-    )  
+    const fetchData = async () => {
+      const loggedUserJSON = window.localStorage.getItem('loggedBlogappUser')
+      if (loggedUserJSON) {
+        const user = JSON.parse(loggedUserJSON)
+        setUser(user)
+        blogService.setToken(user.token)
+      }
+      try {
+        const blogs = await blogService.getAll()
+        setBlogs(blogs)
+      } catch (error) {
+        console.error('Error fetching blogs:', error.response || error)
+        showNotification('Failed to fetch blogs', 'error')
+      }
+    }
+    fetchData()
   }, [])
-
+  const showNotification = (message, type) => {
+    setNotification({ message, type })
+    setTimeout(() => {
+      setNotification(null)
+    }, 5000)
+  }
+  const handleLogout = () => {
+  window.localStorage.removeItem('loggedBlogappUser')
+  blogService.setToken(null)
+  setUser(null)
+}
   const handleLogin = async (event) => {
     event.preventDefault()
     try {
@@ -26,12 +50,15 @@ const App = () => {
       window.localStorage.setItem(
         'loggedBlogappUser', JSON.stringify(user)
       ) 
+      console.log(user)
       blogService.setToken(user.token)
       setUser(user)
+      setName(user.name)
       setUsername('')
       setPassword('')
+      showNotification(`Welcome ${user.name}`, 'success')
     } catch (exception) {
-      console.log('wrong credentials')
+      showNotification('Wrong credentials', 'error')
     }
   }
 
@@ -48,8 +75,11 @@ const App = () => {
       setTitle('')
       setAuthor('')
       setUrl('')
+      showNotification(`A new blog ${returnedBlog.title} by ${returnedBlog.author} added`, 'success')
+      
     } catch (exception) {
-      console.log('Failed to add blog')
+     showNotification('Failed to add blog', 'error')
+      console.log('Failed to add blog', exception)
     }
   }
 
@@ -64,6 +94,7 @@ const App = () => {
           onChange={({ target }) => setUsername(target.value)}
         />
       </div>
+      
       <div>
         password
           <input
@@ -113,10 +144,13 @@ const App = () => {
   return (
     <div>
       <h2>blogs</h2>
+      <Notification message={notification?.message} type={notification?.type} />
       {user === null ?
         loginForm() :
         <div>
-          <p>{user.name} logged-in</p>
+          <p>{user.name} logged-in
+          <button onClick={handleLogout}>Logout</button>
+          </p>
           {blogForm()}
           {blogs.map(blog =>
             <Blog key={blog.id} blog={blog} />
