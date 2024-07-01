@@ -29,7 +29,16 @@ const Blog = ({ blog, updateBlog }) => {
       console.error('Error updating likes:', exception)
     }
   }
-
+   const deletehandler = async () => {
+    if (window.confirm(`Remove blog ${blog.title} by ${blog.author}`)) {
+      try {
+        await blogService.remove(blog.id)
+        updateBlog(blog.id)
+      } catch (exception) {
+        console.error('Error deleting blog:', exception)
+      }
+    }
+    }
   
 
   return (
@@ -46,6 +55,7 @@ const Blog = ({ blog, updateBlog }) => {
             <button onClick={handleLike}>like</button>
           </div>
           <div>{blog.user.name}</div>
+          <button onClick={deletehandler}>delete</button>
         </div>
       )}
     </div>

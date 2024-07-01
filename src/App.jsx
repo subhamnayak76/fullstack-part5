@@ -98,11 +98,13 @@ const App = () => {
       <button type="submit">login</button>
     </form>
   );
-  const updatedBlog = (updatedBlog) => {
-    setBlogs(blogs.map(blog => 
-      blog.id === updatedBlog.id ? updatedBlog : blog
-    ))
-  }
+  const updateBlog = (updatedBlogOrId) => {
+    if (typeof updatedBlogOrId === 'object') {
+      setBlogs(blogs.map((blog) => (blog.id === updatedBlogOrId.id ? updatedBlogOrId : blog)));
+    } else {
+      setBlogs(blogs.filter((blog) => blog.id !== updatedBlogOrId));
+    }
+  };
   
  const sortedblogs = blogs.sort((a, b) => b.likes - a.likes)
   return (
@@ -121,7 +123,7 @@ const App = () => {
             <BlogForm createBlog={addBlog} />
           </Toggle>
           {sortedblogs.map((blog) => (
-            <Blog key={blog.id} blog={blog} updateBlog={updatedBlog} />
+            <Blog key={blog.id} blog={blog} updateBlog={updateBlog} />
           ))}
         </div>
       )}
